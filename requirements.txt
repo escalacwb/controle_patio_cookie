@@ -10,3 +10,4 @@ requests
 streamlit-autorefresh
 streamlit-js-eval
 openai>=1.0.0
+streamlit-authenticator

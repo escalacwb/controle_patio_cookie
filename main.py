@@ -1,9 +1,10 @@
 # /main.py
 
 import streamlit as st
+from auth_utils import initialize_authenticator # Importante
 from streamlit_option_menu import option_menu
 from streamlit_js_eval import streamlit_js_eval
-import login
+# import login # REMOVIDO - O login antigo não é mais necessário
 from pages import (
     cadastro_servico,
     alocar_servicos,
@@ -24,6 +25,22 @@ from pages import (
 )
 
 st.set_page_config(page_title="Controle de Pátio PRO", layout="wide")
+
+
+# --- INICIALIZAÇÃO DO AUTENTICATOR ---
+authenticator = initialize_authenticator()
+
+# --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN E VERIFICAÇÃO ---
+name, authentication_status, username = authenticator.login(location='main')
+
+if not st.session_state.get("authentication_status"):
+    st.info("Por favor, insira seu usuário e senha para continuar.")
+    st.stop()
+elif st.session_state["authentication_status"] is False:
+    st.error("Usuário ou senha incorretos.")
+    st.stop()
+# Se o login for bem-sucedido, o código continua a ser executado normalmente a partir daqui.
+
 
 # --- FLAGS DE INTEGRAÇÃO (via secrets do Streamlit) ---
 OPENAI_READY   = bool(st.secrets.get("OPENAI_API_KEY"))
@@ -49,10 +66,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- LOGIN ---
-if not st.session_state.get('logged_in'):
-    login.render_login_page()
-    st.stop()
 
 # --- ESTADO DE SESSÃO ---
 def initialize_session_state():
@@ -65,7 +78,11 @@ user_agent = streamlit_js_eval(js_expressions='window.navigator.userAgent', key=
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.success(f"Logado como: **{st.session_state.get('user_name')}**")
+    # A biblioteca authenticator usa a chave 'name' por padrão
+    st.success(f"Logado como: **{st.session_state.get('name')}**")
+
+    # Botão de logout gerenciado pela biblioteca
+    authenticator.logout('Logout', 'sidebar', key='logout_button')
 
     # Status das integrações (meramente informativo)
     st.markdown("### Integrações")
@@ -77,10 +94,7 @@ with st.sidebar:
     if not TELEGRAM_READY:
         st.caption("Opcional: `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` para receber laudos no grupo.")
 
-    if st.button("Logout", use_container_width=True, type="secondary"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
+# --- O CÓDIGO ABAIXO PERMANECE EXATAMENTE IGUAL ---
 
 # --- RENDERIZAÇÃO CONDICIONAL ---
 IS_MOBILE = 'Android' in user_agent or 'iPhone' in user_agent
