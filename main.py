@@ -30,6 +30,12 @@ st.set_page_config(page_title="Controle de Pátio PRO", layout="wide")
 # --- INICIALIZAÇÃO DO AUTENTICATOR ---
 authenticator = initialize_authenticator()
 
+# --- VERIFICAÇÃO DE SEGURANÇA ADICIONADA ---
+# Verifica se o autenticador foi inicializado corretamente antes de usá-lo.
+if authenticator is None:
+    st.error("O sistema de autenticação falhou ao ser inicializado. Verifique a conexão com o banco de dados e se existem usuários cadastrados.")
+    st.stop()
+
 # --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN E VERIFICAÇÃO ---
 name, authentication_status, username = authenticator.login(location='main')
 
