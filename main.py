@@ -4,7 +4,6 @@ import streamlit as st
 from auth_utils import initialize_authenticator # Importante
 from streamlit_option_menu import option_menu
 from streamlit_js_eval import streamlit_js_eval
-# import login # REMOVIDO - O login antigo não é mais necessário
 from pages import (
     cadastro_servico,
     alocar_servicos,
@@ -30,23 +29,27 @@ st.set_page_config(page_title="Controle de Pátio PRO", layout="wide")
 # --- INICIALIZAÇÃO DO AUTENTICATOR ---
 authenticator = initialize_authenticator()
 
-# --- VERIFICAÇÃO DE SEGURANÇA ADICIONADA ---
-# Verifica se o autenticador foi inicializado corretamente antes de usá-lo.
 if authenticator is None:
     st.error("O sistema de autenticação falhou ao ser inicializado. Verifique a conexão com o banco de dados e se existem usuários cadastrados.")
     st.stop()
 
-# --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN E VERIFICAÇÃO ---
-name, authentication_status, username = authenticator.login(location='main')
+# --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN (COM A CORREÇÃO) ---
+# A chamada agora inclui o 'form_name' obrigatório, como você apontou.
+name, authentication_status, username = authenticator.login('Login', location='main')
 
-if not st.session_state.get("authentication_status"):
-    st.info("Por favor, insira seu usuário e senha para continuar.")
-    st.stop()
+
+# --- TRATAMENTO DO ESTADO DE AUTENTICAÇÃO (MANEIRA RECOMENDADA) ---
+if st.session_state["authentication_status"]:
+    # O login foi bem-sucedido, o app continua.
+    pass
 elif st.session_state["authentication_status"] is False:
     st.error("Usuário ou senha incorretos.")
     st.stop()
-# Se o login for bem-sucedido, o código continua a ser executado normalmente a partir daqui.
+else: # authentication_status is None
+    st.info("Por favor, insira seu usuário e senha para continuar.")
+    st.stop()
 
+# Se chegou até aqui, o usuário está logado.
 
 # --- FLAGS DE INTEGRAÇÃO (via secrets do Streamlit) ---
 OPENAI_READY   = bool(st.secrets.get("OPENAI_API_KEY"))
@@ -84,10 +87,7 @@ user_agent = streamlit_js_eval(js_expressions='window.navigator.userAgent', key=
 
 # --- SIDEBAR ---
 with st.sidebar:
-    # A biblioteca authenticator usa a chave 'name' por padrão
     st.success(f"Logado como: **{st.session_state.get('name')}**")
-
-    # Botão de logout gerenciado pela biblioteca
     authenticator.logout('Logout', 'sidebar', key='logout_button')
 
     # Status das integrações (meramente informativo)
@@ -100,7 +100,8 @@ with st.sidebar:
     if not TELEGRAM_READY:
         st.caption("Opcional: `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` para receber laudos no grupo.")
 
-# --- O CÓDIGO ABAIXO PERMANECE EXATAMENTE IGUAL ---
+# --- O RESTANTE DO SEU CÓDIGO PERMANECE IGUAL ---
+# (código do menu e roteamento)
 
 # --- RENDERIZAÇÃO CONDICIONAL ---
 IS_MOBILE = 'Android' in user_agent or 'iPhone' in user_agent
@@ -203,6 +204,3 @@ elif selected_page == "Mesclar Históricos":
     mesclar_historico.app()
 elif selected_page == "Exportar CSV":
     exportar_contatos.app()
-
-# Páginas acessadas via link direto (gerar_termos / ajustar_media_km)
-# continuam sem rota direta aqui, seguindo o seu padrão atual.
