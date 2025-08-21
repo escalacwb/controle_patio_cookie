@@ -35,7 +35,10 @@ if authenticator is None:
 
 # --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN (COM A CORREÇÃO) ---
 # A chamada agora inclui o 'form_name' obrigatório, como você apontou.
-name, authentication_status, username = authenticator.login('main')
+result = authenticator.login('main')
+if not result:
+    st.stop()
+name, authentication_status, username = result
 
 
 # --- TRATAMENTO DO ESTADO DE AUTENTICAÇÃO (MANEIRA RECOMENDADA) ---
