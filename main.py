@@ -35,18 +35,19 @@ if authenticator is None:
 
 # --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN (COM A CORREÇÃO) ---
 # A chamada agora inclui o 'form_name' obrigatório, como você apontou.
-name, authentication_status, username = authenticator.login('Login', location='main')
+name, authentication_status, username = authenticator.login('main')
 
 
 # --- TRATAMENTO DO ESTADO DE AUTENTICAÇÃO (MANEIRA RECOMENDADA) ---
-if st.session_state["authentication_status"]:
-    # O login foi bem-sucedido, o app continua.
-    pass
-elif st.session_state["authentication_status"] is False:
-    st.error("Usuário ou senha incorretos.")
+if authentication_status:
+    st.session_state['authentication_status'] = True
+    st.session_state['name'] = name
+    st.session_state['username'] = username
+elif authentication_status is False:
+    st.error('Usuário ou senha incorretos.')
     st.stop()
-else: # authentication_status is None
-    st.info("Por favor, insira seu usuário e senha para continuar.")
+else:
+    st.info('Por favor, insira seu usuário e senha para continuar.')
     st.stop()
 
 # Se chegou até aqui, o usuário está logado.
