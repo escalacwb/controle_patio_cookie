@@ -32,11 +32,9 @@ if authenticator is None:
     st.error("O sistema de autenticação falhou ao ser inicializado. Verifique a conexão com o banco de dados e se existem usuários cadastrados.")
     st.stop()
 
-# --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN (DEFENSIVO) ---
-result = authenticator.login('main')
-if not result:
-    st.stop()
-name, authentication_status, username = result
+# --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN (API 0.4.2) ---
+# >>> CORREÇÃO AQUI: use form_name + location
+name, authentication_status, username = authenticator.login('Login', location='main')
 
 # --- TRATAMENTO DO ESTADO DE AUTENTICAÇÃO (MANEIRA RECOMENDADA) ---
 if authentication_status:
