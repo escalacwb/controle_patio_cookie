@@ -25,7 +25,6 @@ from pages import (
 
 st.set_page_config(page_title="Controle de Pátio PRO", layout="wide")
 
-
 # --- INICIALIZAÇÃO DO AUTENTICATOR ---
 authenticator = initialize_authenticator()
 
@@ -33,13 +32,11 @@ if authenticator is None:
     st.error("O sistema de autenticação falhou ao ser inicializado. Verifique a conexão com o banco de dados e se existem usuários cadastrados.")
     st.stop()
 
-# --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN (COM A CORREÇÃO) ---
-# A chamada agora inclui o 'form_name' obrigatório, como você apontou.
+# --- RENDERIZAÇÃO DO FORMULÁRIO DE LOGIN (DEFENSIVO) ---
 result = authenticator.login('main')
 if not result:
     st.stop()
 name, authentication_status, username = result
-
 
 # --- TRATAMENTO DO ESTADO DE AUTENTICAÇÃO (MANEIRA RECOMENDADA) ---
 if authentication_status:
@@ -55,19 +52,17 @@ else:
 
 # Se chegou até aqui, o usuário está logado.
 
-# --- FLAGS DE INTEGRAÇÃO (via secrets do Streamlit) ---
+# --- FLAGS DE INTEGRAÇÃO ---
 OPENAI_READY   = bool(st.secrets.get("OPENAI_API_KEY"))
 TELEGRAM_READY = bool(st.secrets.get("TELEGRAM_BOT_TOKEN")) and bool(st.secrets.get("TELEGRAM_CHAT_ID"))
 
-# --- CSS DEFINITIVO PARA LAYOUT PROFISSIONAL E RESPONSIVO ---
+# --- CSS ---
 st.markdown("""
 <style>
-    /* 1. REMOÇÃO DE ELEMENTOS NATIVOS DO STREAMLIT */
     [data-testid="stToolbar"] { visibility: hidden; height: 0%; position: fixed; }
     header[data-testid="stHeader"] { display: none !important; }
     footer { visibility: hidden; height: 0%; }
 
-    /* 2. MENU RESPONSIVO PARA CELULAR */
     @media (max-width: 767px) {
         .main .block-container { padding-bottom: 6rem !important; }
         .menu-container div[data-testid="stOptionMenu"] {
@@ -78,7 +73,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
 
 # --- ESTADO DE SESSÃO ---
 def initialize_session_state():
@@ -94,7 +88,6 @@ with st.sidebar:
     st.success(f"Logado como: **{st.session_state.get('name')}**")
     authenticator.logout('Logout', 'sidebar', key='logout_button')
 
-    # Status das integrações (meramente informativo)
     st.markdown("### Integrações")
     st.write(f"OpenAI: {'✅' if OPENAI_READY else '❌'}")
     st.write(f"Telegram: {'✅' if TELEGRAM_READY else '❌'}")
@@ -104,21 +97,15 @@ with st.sidebar:
     if not TELEGRAM_READY:
         st.caption("Opcional: `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` para receber laudos no grupo.")
 
-# --- O RESTANTE DO SEU CÓDIGO PERMANECE IGUAL ---
-# (código do menu e roteamento)
-
 # --- RENDERIZAÇÃO CONDICIONAL ---
 IS_MOBILE = 'Android' in user_agent or 'iPhone' in user_agent
 
-# Envolve o menu para aplicar CSS
 st.markdown('<div class="menu-container">', unsafe_allow_html=True)
 
 if IS_MOBILE:
-    # --- MENU (MOBILE) ---
     mobile_options = ["Cadastro de Serviço", "Alocar Serviços", "Filas de Serviço", "Visão dos Boxes"]
     mobile_icons   = ["truck-front", "card-list", "card-checklist", "view-stacked"]
 
-    # acrescenta Análise de Pneus se OpenAI estiver configurado
     if OPENAI_READY:
         mobile_options.append("Análise de Pneus")
         mobile_icons.append("camera")
@@ -136,7 +123,6 @@ if IS_MOBILE:
         "icon": {"font-size": "20px", "margin-bottom": "4px"}
     }
 else:
-    # --- MENU (PC) ---
     pc_options = [
         "Cadastro de Serviço", "Dados de Clientes", "Alocar Serviços",
         "Filas de Serviço", "Visão dos Boxes", "Serviços Concluídos",
@@ -145,10 +131,9 @@ else:
     pc_icons = [
         "truck-front", "people", "card-list",
         "card-checklist", "view-stacked", "check-circle",
-        "clock-history", "telephone-outbound", "arrow-repeat",
+        "clock-history", "telephone-outbound", "arrow-repeat", "download",
     ]
 
-    # acrescenta Análise de Pneus se OpenAI estiver configurado
     if OPENAI_READY:
         pc_options.append("Análise de Pneus")
         pc_icons.append("camera")
@@ -165,6 +150,11 @@ else:
         "nav-link": {"font-size": "16px", "text-align": "center", "margin":"0px", "--hover-color": "#444"},
         "nav-link-selected": {"background-color": "#1a1a1a"},
     }
+
+# --- Segurança: garante alinhamento ---
+assert len(options_to_show) == len(icons_to_show), (
+    f"Menu config mismatch: {len(options_to_show)} opções vs {len(icons_to_show)} ícones"
+)
 
 selected_page = option_menu(
     menu_title=None,
@@ -198,7 +188,6 @@ elif selected_page == "Controle de Feedback":
 elif selected_page == "Revisão Proativa":
     revisao_proativa.app()
 elif selected_page == "Análise de Pneus":
-    # chama a página de análise (só aparece no menu se OPENAI_READY for True)
     analise_pneus.app()
 elif selected_page == "Gerenciar Usuários":
     gerenciar_usuarios.app()
